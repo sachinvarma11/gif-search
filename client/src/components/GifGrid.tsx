@@ -13,43 +13,17 @@ interface GifGridProps {
 export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
   const { toast } = useToast();
 
-  const copyToClipboard = async (gif: GiphyGif) => {
+  const copyToClipboard = async (url: string) => {
     try {
-      // Fetch the GIF file
-      const response = await fetch(gif.images.original.url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch GIF');
-      }
-      const blob = await response.blob();
-
-      // Try to copy as blob
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            [blob.type]: blob
-          })
-        ]);
-        toast({
-          description: "GIF copied! You can now paste it directly.",
-          duration: 2000,
-        });
-      } catch (writeError) {
-        console.error('Clipboard write error:', writeError);
-        // If direct copy fails, open the GIF in a new tab
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        URL.revokeObjectURL(url);
-
-        toast({
-          description: "Direct copy not supported. Right-click the GIF in the new tab to save or copy.",
-          duration: 5000,
-        });
-      }
+      await navigator.clipboard.writeText(url);
+      toast({
+        description: "GIF URL copied to clipboard!",
+        duration: 2000,
+      });
     } catch (err) {
-      console.error('Copy error:', err);
       toast({
         variant: "destructive",
-        description: "Failed to copy GIF. Right-click the image and select 'Copy image'.",
+        description: "Failed to copy GIF URL",
       });
     }
   };
@@ -78,18 +52,7 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
         <Card
           key={gif.id}
           className="group relative overflow-hidden cursor-pointer transition-transform hover:scale-105"
-          onClick={() => copyToClipboard(gif)}
-          onContextMenu={(e) => {
-            // Prevent default context menu
-            e.preventDefault();
-            // Create a temporary anchor element
-            const link = document.createElement('a');
-            link.href = gif.images.original.url;
-            link.download = `${gif.title || 'gif'}.gif`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }}
+          onClick={() => copyToClipboard(gif.images.original.url)}
         >
           <img
             src={gif.images.fixed_height.url}
@@ -100,8 +63,7 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-white">
               <Copy className="h-6 w-6" />
-              <span className="text-sm font-medium">Click to copy GIF</span>
-              <span className="text-xs text-gray-300">(Right-click to download)</span>
+              <span className="text-sm font-medium">Click to copy</span>
             </div>
           </div>
         </Card>
