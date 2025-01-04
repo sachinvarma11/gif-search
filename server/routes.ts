@@ -2,7 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 
 export function registerRoutes(app: Express): Server {
-  const GIPHY_API_KEY = process.env.GIPHY_API_KEY || "CdRKiCMbTnt9CkZTZ0lGukSczk6iT4Z6"; 
+  const GIPHY_API_KEY = process.env.GIPHY_API_KEY;
+
+  if (!GIPHY_API_KEY) {
+    throw new Error("GIPHY_API_KEY environment variable is required");
+  }
 
   // Trending GIFs endpoint
   app.get("/api/gifs/trending", async (req, res) => {
@@ -44,7 +48,7 @@ export function registerRoutes(app: Express): Server {
         q = "", 
         offset = "0", 
         limit = "20",
-        rating = "g", // g, pg, pg-13, r
+        rating = "g",
         lang = "en",
       } = req.query;
 
