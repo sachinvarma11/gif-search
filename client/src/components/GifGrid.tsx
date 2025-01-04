@@ -2,9 +2,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Copy } from "lucide-react";
+import type { GiphyGif } from "@/types/giphy";
 
 interface GifGridProps {
-  gifs: any[];
+  gifs: GiphyGif[];
   isLoading: boolean;
   search: string;
 }

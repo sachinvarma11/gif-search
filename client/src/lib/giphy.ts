@@ -1,11 +1,11 @@
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
-): T {
+): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
 
-  return ((...args: Parameters<T>) => {
+  return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => callback(...args), delay);
-  }) as T;
+  };
 }

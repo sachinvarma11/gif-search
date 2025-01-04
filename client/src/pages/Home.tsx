@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useDebouncedCallback } from "@/lib/giphy";
+import type { GiphyResponse } from "@/types/giphy";
 import GifGrid from "@/components/GifGrid";
 import SearchInput from "@/components/SearchInput";
 import FilterBar from "@/components/FilterBar";
@@ -19,14 +20,15 @@ export default function Home() {
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams({
         q: search,
-        offset: pageParam.toString(),
+        offset: String(pageParam),
         rating
       });
       const response = await fetch(`/api/gifs?${params}`);
       if (!response.ok) throw new Error('Failed to fetch gifs');
-      return response.json();
+      return response.json() as Promise<GiphyResponse>;
     },
-    getNextPageParam: (lastPage) => {
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: GiphyResponse) => {
       if (lastPage.pagination.total_count > lastPage.pagination.offset + lastPage.pagination.count) {
         return lastPage.pagination.offset + lastPage.pagination.count;
       }
@@ -39,14 +41,15 @@ export default function Home() {
     queryKey: ['/api/gifs/trending', rating],
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams({
-        offset: pageParam.toString(),
+        offset: String(pageParam),
         rating
       });
       const response = await fetch(`/api/gifs/trending?${params}`);
       if (!response.ok) throw new Error('Failed to fetch trending gifs');
-      return response.json();
+      return response.json() as Promise<GiphyResponse>;
     },
-    getNextPageParam: (lastPage) => {
+    initialPageParam: 0,
+    getNextPageParam: (lastPage: GiphyResponse) => {
       if (lastPage.pagination.total_count > lastPage.pagination.offset + lastPage.pagination.count) {
         return lastPage.pagination.offset + lastPage.pagination.count;
       }
