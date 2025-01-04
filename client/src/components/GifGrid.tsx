@@ -15,41 +15,18 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
 
   const copyToClipboard = async (gif: GiphyGif) => {
     try {
-      // Create an img element to load the GIF
-      const img = document.createElement('img');
-      img.src = gif.images.original.url;
-
-      // Wait for the image to load
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-
-      // Create a canvas to draw the image
-      const canvas = document.createElement('canvas');
-      canvas.width = parseInt(gif.images.original.width);
-      canvas.height = parseInt(gif.images.original.height);
-
-      // Draw the image to canvas
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        throw new Error('Failed to get canvas context');
+      // Fetch the GIF file
+      const response = await fetch(gif.images.original.url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch GIF');
       }
-      ctx.drawImage(img, 0, 0);
-
-      // Convert to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Failed to create blob'));
-        }, 'image/png');
-      });
+      const blob = await response.blob();
 
       // Try to copy as blob
       try {
         await navigator.clipboard.write([
           new ClipboardItem({
-            'image/png': blob
+            [blob.type]: blob
           })
         ]);
         toast({
@@ -58,22 +35,21 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
         });
       } catch (writeError) {
         console.error('Clipboard write error:', writeError);
-        // Try alternative method for copying
-        try {
-          await navigator.clipboard.writeText(gif.images.original.url);
-          toast({
-            description: "Copied GIF URL (Your browser doesn't support direct GIF copy)",
-            duration: 3000,
-          });
-        } catch (textError) {
-          throw new Error('Failed to copy both as image and URL');
-        }
+        // If direct copy fails, open the GIF in a new tab
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        URL.revokeObjectURL(url);
+
+        toast({
+          description: "Direct copy not supported. Right-click the GIF in the new tab to save or copy.",
+          duration: 5000,
+        });
       }
     } catch (err) {
       console.error('Copy error:', err);
       toast({
         variant: "destructive",
-        description: "Failed to copy GIF. Try again or right-click to copy.",
+        description: "Failed to copy GIF. Right-click the image and select 'Copy image'.",
       });
     }
   };
@@ -103,6 +79,17 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
           key={gif.id}
           className="group relative overflow-hidden cursor-pointer transition-transform hover:scale-105"
           onClick={() => copyToClipboard(gif)}
+          onContextMenu={(e) => {
+            // Prevent default context menu
+            e.preventDefault();
+            // Create a temporary anchor element
+            const link = document.createElement('a');
+            link.href = gif.images.original.url;
+            link.download = `${gif.title || 'gif'}.gif`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}
         >
           <img
             src={gif.images.fixed_height.url}
@@ -114,6 +101,7 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
             <div className="flex flex-col items-center gap-2 text-white">
               <Copy className="h-6 w-6" />
               <span className="text-sm font-medium">Click to copy GIF</span>
+              <span className="text-xs text-gray-300">(Right-click to download)</span>
             </div>
           </div>
         </Card>
