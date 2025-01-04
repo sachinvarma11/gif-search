@@ -13,17 +13,35 @@ interface GifGridProps {
 export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
   const { toast } = useToast();
 
-  const copyToClipboard = async (url: string) => {
+  const copyToClipboard = async (gif: GiphyGif) => {
     try {
-      await navigator.clipboard.writeText(url);
-      toast({
-        description: "GIF URL copied to clipboard!",
-        duration: 2000,
-      });
+      // Fetch the GIF file
+      const response = await fetch(gif.images.original.url);
+      const blob = await response.blob();
+
+      // Try to copy as blob first (for modern browsers)
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+        toast({
+          description: "GIF copied! You can now paste it directly.",
+          duration: 2000,
+        });
+      } catch (writeError) {
+        // Fallback to copying URL if blob copy fails
+        await navigator.clipboard.writeText(gif.images.original.url);
+        toast({
+          description: "Copied GIF URL (Your browser doesn't support direct GIF copy)",
+          duration: 3000,
+        });
+      }
     } catch (err) {
       toast({
         variant: "destructive",
-        description: "Failed to copy GIF URL",
+        description: "Failed to copy GIF",
       });
     }
   };
@@ -52,7 +70,7 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
         <Card
           key={gif.id}
           className="group relative overflow-hidden cursor-pointer transition-transform hover:scale-105"
-          onClick={() => copyToClipboard(gif.images.original.url)}
+          onClick={() => copyToClipboard(gif)}
         >
           <img
             src={gif.images.fixed_height.url}
@@ -63,7 +81,7 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-white">
               <Copy className="h-6 w-6" />
-              <span className="text-sm font-medium">Click to copy</span>
+              <span className="text-sm font-medium">Click to copy GIF</span>
             </div>
           </div>
         </Card>
