@@ -1,6 +1,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Copy } from "lucide-react";
 
 interface GifGridProps {
   gifs: any[];
@@ -49,7 +50,7 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
       {gifs.map((gif) => (
         <Card
           key={gif.id}
-          className="overflow-hidden cursor-pointer transition-transform hover:scale-105"
+          className="group relative overflow-hidden cursor-pointer transition-transform hover:scale-105"
           onClick={() => copyToClipboard(gif.images.original.url)}
         >
           <img
@@ -58,6 +59,12 @@ export default function GifGrid({ gifs, isLoading, search }: GifGridProps) {
             loading="lazy"
             className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-white">
+              <Copy className="h-6 w-6" />
+              <span className="text-sm font-medium">Click to copy</span>
+            </div>
+          </div>
         </Card>
       ))}
     </div>
