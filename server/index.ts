@@ -2,6 +2,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -60,7 +64,8 @@ app.use((req, res, next) => {
 
   // Serve static files in production
   if (process.env.NODE_ENV === 'production') {
-    const staticPath = path.join(__dirname, 'public');
+    // In production, use path relative to the current file
+    const staticPath = path.resolve(__dirname, '..', 'dist', 'public');
     app.use(express.static(staticPath));
 
     // Serve index.html for all non-API routes in production
